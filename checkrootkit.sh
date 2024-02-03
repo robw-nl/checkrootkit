@@ -11,9 +11,22 @@
 # (related to Linux/Xor.DDoS false positives warning. So line 1283 to 1298
 # commented out in /usr/bin/chkrootkit file
 #
-# updated on January 5, 2023
-# v1.11 (rev 3)
+# updated on January 5, 2023 v1.11 (rev 3) 
+# refactored and extended check en logs, january 12, 2024
+# more improvements, better SSH check. february 3, 2024
 #
+
+# Check if the run file exists and was last modified today
+check_run_file() {
+    # Check if the run file exists and was last modified today
+    if [[ -f "${RUN_FILE}" ]] && [[ "$(date -r "${RUN_FILE}" +%Y%m%d)" == "$(date +%Y%m%d)" ]]; then
+        # The run file exists and was last modified today, so exit the script
+        exit 0
+    fi
+
+    # The run file doesn't exist or wasn't last modified today, so touch the run file and continue with the script
+    touch "${RUN_FILE}"
+}
 
 # Source the configuration file
 CONFIG_FILE="/home/rob/Files/Scripts/checkrootkit.conf"
@@ -27,6 +40,13 @@ fi
 # Function to log messages with timestamp
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$SCANLOG"
+}
+
+# Check if SSH is active. If it is enabled it may interfere with scanning for rootkits
+check_ssh() {
+    if systemctl is-active --quiet sshd; then
+        notify-send -t 5000 "$(echo -e "*** SSH is active ***\nDisable before checking for rootkits")"
+    fi
 }
 
 # Function to check for rootkits
@@ -49,18 +69,10 @@ check_rootkits() {
     fi
 }
 
-# Function to check if ssh is enabled
-check_ssh() {
-    sudo systemctl status sshd.service > "$SCANSSH"
-    if grep -qw "inactive" "$SCANSSH"; then
-        notify-send "*** GOOD: SSH NOT ACTIVE ***"
-        log_message "SSH is not active."
-    else
-        kate "$SCANSSH"
-        log_message "SSH is active. Check $SCANSSH for details."
-    fi
-}
+# Wait for 10 seconds for the desktop to load as this script runs on first startup
+sleep 5
 
 # Run the functions
-check_rootkits
+check_run_file
 check_ssh
+check_rootkits
