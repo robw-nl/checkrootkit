@@ -8,8 +8,6 @@
 # created by rob wijhenke november 2020
 #
 # use 'sudo systemctl status sshd.service' to check if ssh ports are open
-# (related to Linux/Xor.DDoS false positives warning. So line 1283 to 1298
-# commented out in /usr/bin/chkrootkit file
 #
 # updated on January 5, 2023 v1.11 (rev 3) 
 # refactored and extended check en logs, january 12, 2024
